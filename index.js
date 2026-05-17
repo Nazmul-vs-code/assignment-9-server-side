@@ -25,10 +25,30 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        // Connect the client to the server	(optional starting in v4.7)
+
         await client.connect();
-        // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
+
+
+        const db = client.db('ideavault');
+        const ideaCollactions = db.collection('ideas');
+        
+        // Interacting with ideas ( collection )
+        app.get('/ideas', async (req , res) => {
+            
+            const data = await ideaCollactions.find().toArray()
+            res.json(data);
+        } )
+
+        
+        app.get('/ideas-for-home', async (req , res) => {
+            
+            const data = await ideaCollactions.find().limit(6).toArray()
+            res.json(data);
+        } )
+
+
+
+            await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
@@ -41,8 +61,10 @@ app.get('/', (req, res) => {
     res.send('Hello World!')
 })
 
+
+
 app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
+    console.log(`Example app listening on http://localhost:${port}`)
 })
 
 
