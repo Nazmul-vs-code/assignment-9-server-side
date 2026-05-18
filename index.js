@@ -73,6 +73,42 @@ async function run() {
 
         });
 
+
+        // Delete my ideas
+
+        app.delete('/ideas/:id', async (req, res) => {
+            const ideaId = await req.params.id;
+            const query = await {_id: new ObjectId(ideaId)}
+
+            // const comment = await req.body;
+            const result = await ideaCollections.deleteOne(query)
+            if (result.deletedCount === 0) {
+                return res.status(404).json({ success: false, message: "Comment not found" });
+            }
+
+            return res.status(200).json({ success: true, deletedCount: result.deletedCount });
+
+        });
+
+        app.patch('/ideas/:id', async (req, res) => {
+            const ideaId = req.params.id
+            const query =  {_id : new ObjectId(ideaId)}
+            const updateText = {
+                $set: req.body 
+            }
+
+            const result = await ideaCollections.updateOne(query, updateText);
+            // res.json(result)
+
+            if (!result) {
+                return res.status(404).json({ message: "Idea not found" });
+            }
+
+            res.json(result);
+        })
+
+
+
         // Getting trending ideas
         app.get('/ideas-for-home', async (req, res) => {
 
@@ -138,8 +174,9 @@ async function run() {
             return res.status(200).json({ success: true, deletedCount: result.deletedCount });
 
         })
+        
 
-        // Delete commnt Edit comment
+        // Edit comment
 
         app.patch('/edit-comment/:id', async (req, res) => {
             const commentId = req.params.id
@@ -159,6 +196,8 @@ async function run() {
 
             res.json(result);
         })
+
+
 
 
         // await client.db("admin").command({ ping: 1 });
