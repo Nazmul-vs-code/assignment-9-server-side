@@ -96,7 +96,7 @@ async function run() {
         // adding comment
         app.post('/add-comments', async (req, res) => {
             const comment = await req.body;
-            console.log(comment, " Comment in backend ")
+            // console.log(comment, " Comment in backend ")
             const result = await ideaCommentsCollections.insertOne(comment);
             // res.json(result)
 
@@ -105,6 +105,22 @@ async function run() {
             }
 
             res.json(result);
+        })
+
+        // Delete commnt BTW
+        app.delete('/delete-comment/:id' , async (req , res) => {
+            const commentId = await req.params.id;
+            // const query = await {_id: new ObjectId(commentId)}
+            const query = { id: parseInt(commentId) };
+
+            // const comment = await req.body;
+            const result = await ideaCommentsCollections.deleteOne( query )
+            if (result.deletedCount === 0) {
+            return res.status(404).json({ success: false, message: "Comment not found" });
+        }
+
+        return res.status(200).json({ success: true, deletedCount: result.deletedCount });
+
         })
 
 
