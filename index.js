@@ -3,7 +3,7 @@ dns.setServers(["8.8.8.8", "1.1.1.1", "8.8.4.4"]);
 
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 require("dotenv").config()
 app.use(express.json());
@@ -31,24 +31,51 @@ async function run() {
 
         const db = client.db('ideavault');
         const ideaCollactions = db.collection('ideas');
-        
+
         // Interacting with ideas ( collection )
-        app.get('/ideas', async (req , res) => {
-            
+
+        // getting all data of idea collection
+        app.get('/ideas', async (req, res) => {
+
             const data = await ideaCollactions.find().toArray()
             res.json(data);
-        } )
+        });
 
-        
-        app.get('/ideas-for-home', async (req , res) => {
-            
+        // getting one idea based on the id
+        app.get('/ideas/:id', async (req, res) => {
+
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await ideaCollactions.findOne(query);
+
+            if (!result) {
+                return res.status(404).json({ message: "Idea not found" });
+            }
+
+            res.json(result);
+
+        })
+
+        // Getting trending ideas
+        app.get('/ideas-for-home', async (req, res) => {
+
             const data = await ideaCollactions.find().limit(6).toArray()
             res.json(data);
-        } )
+        })
+
+
+        // Adding one idea based on the id
+        app.post('/ideas', async (req, res) => {
+            const idea = await req.body;
+            console.log( idea , ' Idea found in backend ')
+            const result = await ideaCollactions.insertOne( idea );
+            res.json(result)
+        })
 
 
 
-            await client.db("admin").command({ ping: 1 });
+
+        await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
