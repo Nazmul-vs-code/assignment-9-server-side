@@ -76,7 +76,7 @@ async function run() {
 
         // Interacting with user comments in an idea ( collection = idea_comments)
 
-         
+
         // Getting comments filtered by ideaId
         app.get('/comments', async (req, res) => {
             try {
@@ -108,21 +108,41 @@ async function run() {
         })
 
         // Delete commnt BTW
-        app.delete('/delete-comment/:id' , async (req , res) => {
+        app.delete('/delete-comment/:id', async (req, res) => {
             const commentId = await req.params.id;
             // const query = await {_id: new ObjectId(commentId)}
             const query = { id: parseInt(commentId) };
 
             // const comment = await req.body;
-            const result = await ideaCommentsCollections.deleteOne( query )
+            const result = await ideaCommentsCollections.deleteOne(query)
             if (result.deletedCount === 0) {
-            return res.status(404).json({ success: false, message: "Comment not found" });
-        }
+                return res.status(404).json({ success: false, message: "Comment not found" });
+            }
 
-        return res.status(200).json({ success: true, deletedCount: result.deletedCount });
+            return res.status(200).json({ success: true, deletedCount: result.deletedCount });
 
         })
 
+        // Delete commnt Edit comment
+
+        app.patch('/edit-comment/:id', async (req, res) => {
+            const commentId = req.params.id
+            const { text } = req.body;
+
+            const query = { id : parseInt(commentId)}
+            const updateText = {
+                $set : {text: text}
+            }
+
+            const result = await ideaCommentsCollections.updateOne(query , updateText);
+            // res.json(result)
+
+            if (!result) {
+                return res.status(404).json({ message: "Idea not found" });
+            }
+
+            res.json(result);
+        })
 
 
         // await client.db("admin").command({ ping: 1 });
