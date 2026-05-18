@@ -38,8 +38,27 @@ async function run() {
         // getting all data of idea collection
         app.get('/ideas', async (req, res) => {
 
-            const data = await ideaCollections.find().toArray()
-            res.json(data);
+            try {
+                const { search, category } = req.query;
+
+                let query = {}
+
+                if (search) {
+                    query.ideaTitle = { $regex: search, $options: 'i' };
+                }
+
+                if (category) {
+                    query.category = category;
+                }
+
+                const data = await ideaCollections.find(query).toArray();
+
+                res.json(data)
+
+            } catch (error) {
+                console.error("Error fetching ideas:", error);
+                res.status(500).json({ message: "Internal server error" });
+            }
         });
 
         // getting one idea based on the id
@@ -206,7 +225,7 @@ async function run() {
 
             const ObjectIds = ideaIds.map(id => new ObjectId(id));
             const result = await ideaCollections.find({ _id: { $in: ObjectIds } }).toArray();
-            
+
             res.json(result)
         })
 
