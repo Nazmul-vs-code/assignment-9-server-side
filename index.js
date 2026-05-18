@@ -30,7 +30,7 @@ async function run() {
 
 
         const db = client.db('ideavault');
-        const ideaCollactions = db.collection('ideas');
+        const ideaCollections = db.collection('ideas');
         const ideaCommentsCollections = db.collection('idea_comments');
 
         // Interacting with ideas ( collection = ideas )
@@ -38,7 +38,7 @@ async function run() {
         // getting all data of idea collection
         app.get('/ideas', async (req, res) => {
 
-            const data = await ideaCollactions.find().toArray()
+            const data = await ideaCollections.find().toArray()
             res.json(data);
         });
 
@@ -47,7 +47,7 @@ async function run() {
 
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
-            const result = await ideaCollactions.findOne(query);
+            const result = await ideaCollections.findOne(query);
 
             if (!result) {
                 return res.status(404).json({ message: "Idea not found" });
@@ -55,12 +55,28 @@ async function run() {
 
             res.json(result);
 
-        })
+        });
+
+        // Getting own created idea for my-idea page
+        app.get('/my-ideas', async (req, res) => {
+
+            const authorId = req.query.authorId;
+
+            let query = {};
+            if (authorId) {
+                query = { authorId: authorId };
+            }
+
+
+            const result = await ideaCollections.find(query).toArray();
+            res.send(result);
+
+        });
 
         // Getting trending ideas
         app.get('/ideas-for-home', async (req, res) => {
 
-            const data = await ideaCollactions.find().limit(6).toArray()
+            const data = await ideaCollections.find().limit(6).toArray()
             res.json(data);
         })
 
@@ -69,7 +85,7 @@ async function run() {
         app.post('/ideas', async (req, res) => {
             const idea = await req.body;
             // console.log( idea , ' Idea found in backend ')
-            const result = await ideaCollactions.insertOne(idea);
+            const result = await ideaCollections.insertOne(idea);
             res.json(result)
         })
 
@@ -129,12 +145,12 @@ async function run() {
             const commentId = req.params.id
             const { text } = req.body;
 
-            const query = { id : parseInt(commentId)}
+            const query = { id: parseInt(commentId) }
             const updateText = {
-                $set : {text: text}
+                $set: { text: text }
             }
 
-            const result = await ideaCommentsCollections.updateOne(query , updateText);
+            const result = await ideaCommentsCollections.updateOne(query, updateText);
             // res.json(result)
 
             if (!result) {
