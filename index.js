@@ -31,8 +31,9 @@ async function run() {
 
         const db = client.db('ideavault');
         const ideaCollactions = db.collection('ideas');
+        const ideaCommentsCollections = db.collection('idea_comments');
 
-        // Interacting with ideas ( collection )
+        // Interacting with ideas ( collection = ideas )
 
         // getting all data of idea collection
         app.get('/ideas', async (req, res) => {
@@ -67,11 +68,44 @@ async function run() {
         // Adding one idea based on the id
         app.post('/ideas', async (req, res) => {
             const idea = await req.body;
-            console.log( idea , ' Idea found in backend ')
-            const result = await ideaCollactions.insertOne( idea );
+            // console.log( idea , ' Idea found in backend ')
+            const result = await ideaCollactions.insertOne(idea);
             res.json(result)
         })
 
+
+        // Interacting with user comments in an idea ( collection = idea_comments)
+
+         
+        // Getting comments filtered by ideaId
+        app.get('/comments', async (req, res) => {
+            try {
+                const { ideaId } = req.query;
+
+                const query = ideaId ? { ideaId: ideaId } : {};
+
+                const data = await ideaCommentsCollections.find(query).toArray();
+                res.json(data);
+            } catch (error) {
+                console.error("Error fetching comments:", error);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
+
+
+        // adding comment
+        app.post('/add-comments', async (req, res) => {
+            const comment = await req.body;
+            console.log(comment, " Comment in backend ")
+            const result = await ideaCommentsCollections.insertOne(comment);
+            // res.json(result)
+
+            if (!result) {
+                return res.status(404).json({ message: "Idea not found" });
+            }
+
+            res.json(result);
+        })
 
 
 
