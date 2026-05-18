@@ -78,7 +78,7 @@ async function run() {
 
         app.delete('/ideas/:id', async (req, res) => {
             const ideaId = await req.params.id;
-            const query = await {_id: new ObjectId(ideaId)}
+            const query = await { _id: new ObjectId(ideaId) }
 
             // const comment = await req.body;
             const result = await ideaCollections.deleteOne(query)
@@ -92,9 +92,9 @@ async function run() {
 
         app.patch('/ideas/:id', async (req, res) => {
             const ideaId = req.params.id
-            const query =  {_id : new ObjectId(ideaId)}
+            const query = { _id: new ObjectId(ideaId) }
             const updateText = {
-                $set: req.body 
+                $set: req.body
             }
 
             const result = await ideaCollections.updateOne(query, updateText);
@@ -174,7 +174,7 @@ async function run() {
             return res.status(200).json({ success: true, deletedCount: result.deletedCount });
 
         })
-        
+
 
         // Edit comment
 
@@ -197,7 +197,18 @@ async function run() {
             res.json(result);
         })
 
+        // Get Ideas That The Spasific User Interacted With Commenting
+        app.get('/my-interactions', async (req, res) => {
+            const authorId = req.query.authorId;
 
+            const userComments = await ideaCommentsCollections.find({ authorId: authorId }).toArray();
+            const ideaIds = [...new Set(userComments.map(comment => comment.ideaId))];
+
+            const ObjectIds = ideaIds.map(id => new ObjectId(id));
+            const result = await ideaCollections.find({ _id: { $in: ObjectIds } }).toArray();
+            
+            res.json(result)
+        })
 
 
         // await client.db("admin").command({ ping: 1 });
