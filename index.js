@@ -4,6 +4,7 @@ dns.setServers(["8.8.8.8", "1.1.1.1", "8.8.4.4"]);
 const express = require('express')
 const cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 const app = express()
 require("dotenv").config()
 app.use(express.json());
@@ -23,6 +24,36 @@ const client = new MongoClient(uri, {
     }
 });
 
+const authServerUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+
+const JWKS = createRemoteJWKSet(
+    new URL(`${authServerUrl}/api/auth/jwks`)
+);
+
+const tokenVerify = async (req, res, next) => {
+    const header = req?.headers.authorization
+
+    const token = header.split(' ')[1]
+
+    if (!header || !token) {
+        res.status(401).json({ message: 'Unauthorized ' })
+    }
+
+
+    try {
+
+        const { payload } = await jwtVerify(token, JWKS)
+        console.log(payload, ' payload verified ')
+        next()
+
+    } catch (error) {
+        return res.status(403).json({ message: ' Blocked' })
+    }
+
+
+
+}
+
 async function run() {
     try {
 
@@ -36,7 +67,7 @@ async function run() {
         // Interacting with ideas ( collection = ideas )
 
         // getting all data of idea collection
-        app.get('/ideas', async (req, res) => {
+        app.get('/ideas',  async (req, res) => {
 
             try {
                 const { search, category } = req.query;
@@ -62,7 +93,7 @@ async function run() {
         });
 
         // getting one idea based on the id
-        app.get('/ideas/:id', async (req, res) => {
+        app.get('/ideas/:id', tokenVerify, async (req, res) => {
 
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -77,7 +108,7 @@ async function run() {
         });
 
         // Getting own created idea for my-idea page
-        app.get('/my-ideas', async (req, res) => {
+        app.get('/my-ideas', tokenVerify, async (req, res) => {
 
             const authorId = req.query.authorId;
 
@@ -137,7 +168,7 @@ async function run() {
 
 
         // Adding one idea based on the id
-        app.post('/ideas', async (req, res) => {
+        app.post('/ideas', tokenVerify ,  async (req, res) => {
             const idea = await req.body;
             // console.log( idea , ' Idea found in backend ')
             const result = await ideaCollections.insertOne(idea);
@@ -217,7 +248,7 @@ async function run() {
         })
 
         // Get Ideas That The Spasific User Interacted With Commenting
-        app.get('/my-interactions', async (req, res) => {
+        app.get('/my-interactions', tokenVerify, async (req, res) => {
             const authorId = req.query.authorId;
 
             const userComments = await ideaCommentsCollections.find({ authorId: authorId }).toArray();
